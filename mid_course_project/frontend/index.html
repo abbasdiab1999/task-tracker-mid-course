@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Task Tracker</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero panel">
+      <div>
+        <p class="eyebrow">Mid-Course Project</p>
+        <h1>Task Tracker</h1>
+        <p class="hero-copy">Track due dates, tags, priorities, and status moves in one board.</p>
+      </div>
+      <div class="stats">
+        <div class="stat-card">
+          <span class="stat-value" id="total-count">0</span>
+          <span class="stat-label">Total tasks</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="overdue-count">0</span>
+          <span class="stat-label">Overdue</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>Create task</h2>
+            <p>Add a new item to the board with optional metadata.</p>
+          </div>
+          <form id="create-form" class="stack-form">
+            <input id="title" placeholder="Task title" required />
+            <textarea id="description" placeholder="Description"></textarea>
+            <div class="two-up">
+              <select id="priority">
+                <option>High</option><option selected>Medium</option><option>Low</option>
+              </select>
+              <input id="assignee" placeholder="Assignee (optional)" />
+            </div>
+            <div class="two-up">
+              <input id="due-date" type="date" />
+              <input id="tags" placeholder="Tags, comma separated" />
+            </div>
+            <button type="submit" class="primary">Add task</button>
+          </form>
+          <div id="form-error" class="error"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>Filters</h2>
+            <p>Search by status, priority, tag, or overdue state.</p>
+          </div>
+          <div class="stack-form filters">
+            <select id="filter-status">
+              <option value="">All statuses</option>
+              <option value="ToDo">To Do</option>
+              <option value="InProgress">In Progress</option>
+              <option value="Done">Done</option>
+            </select>
+            <select id="filter-priority">
+              <option value="">All priorities</option>
+              <option>High</option><option>Medium</option><option>Low</option>
+            </select>
+            <select id="filter-overdue">
+              <option value="">All due states</option>
+              <option value="true">Overdue only</option>
+              <option value="false">Not overdue</option>
+            </select>
+            <input id="filter-tag" placeholder="Filter by tag" />
+            <div class="button-row">
+              <button id="apply-filters" type="button" class="secondary">Apply</button>
+              <button id="clear-filters" type="button" class="ghost">Clear</button>
+            </div>
+          </div>
+          <p id="results-note" class="results-note">Showing all tasks</p>
+        </section>
+      </aside>
+
+      <section class="board-shell">
+        <div class="board-meta">
+          <h2>Board</h2>
+          <p>Each column shows the current tasks and exposes a single move action.</p>
+        </div>
+
+        <section id="empty-state" class="panel empty-state" hidden></section>
+
+        <div class="board">
+          <section class="column">
+            <div class="column-head"><h2>To Do</h2><span class="column-count" id="count-ToDo">0</span></div>
+            <div id="ToDo" class="column-body"></div>
+          </section>
+          <section class="column">
+            <div class="column-head"><h2>In Progress</h2><span class="column-count" id="count-InProgress">0</span></div>
+            <div id="InProgress" class="column-body"></div>
+          </section>
+          <section class="column">
+            <div class="column-head"><h2>Done</h2><span class="column-count" id="count-Done">0</span></div>
+            <div id="Done" class="column-body"></div>
+          </section>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
