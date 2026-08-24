@@ -118,6 +118,60 @@ Done -> InProgress
 
 Invalid transitions return HTTP 422.
 
+---
+
+## Final Project
+
+Branch reviewed: `final-project`
+
+### What this submission demonstrates
+
+- Existing Task Tracker app still runs inside the intended course scope.
+- CI runs the pytest suite on push and pull request.
+- Docker image builds and runs with `/health` returning 200.
+- AI review, security, and ownership evidence is in `docs/`.
+
+### How to run locally
+
+```bash
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+Open `http://127.0.0.1:8000` in a browser. Health check: `http://127.0.0.1:8000/health`
+
+### How to run tests
+
+```bash
+PYTHONPATH=. pytest -q
+```
+
+Expected result: `10 passed` (no failures).
+
+### How to run with Docker
+
+```bash
+docker build -t task-tracker .
+docker run -p 8000:8000 task-tracker
+curl http://localhost:8000/health
+```
+
+Expected `/health` response: `{"status":"ok"}` with HTTP 200.
+
+### Evidence files
+
+- `docs/release-evidence.md`
+- `docs/final-ai-review.md`
+- `docs/ai-playbook.md`
+
+### AI assistance summary
+
+AI helped draft or review: CI workflow, Dockerfile, documentation templates, and security checklist.
+I verified the work by: running all 10 tests, checking the health endpoint manually, reading each generated config file line by line, and running the corrected pytest command.
+One AI suggestion I rejected or corrected: AI suggested adding `limit`/`offset` pagination to `GET /tasks` — rejected because it is a new product feature prohibited by the project brief.
+
 ## Submission checklist
 
 - [x] Two scoped features implemented.
