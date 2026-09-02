@@ -4,6 +4,14 @@ This log is intentionally concise. It records meaningful prompts and the decisio
 
 ## Feature 1 — Due dates
 
+### Weak prompt rewrite example
+
+**Weak prompt**
+> Add due dates.
+
+**Stronger prompt**
+> Using the existing FastAPI Task Tracker structure, add an optional `due_date` to task create/update/response models. Compute an `overdue` boolean rather than storing it. A task is overdue only when due_date is before today and status is not Done. Keep changes limited to models and a small business-rule helper. Do not add authentication, databases, or unrelated refactors.
+
 ### Prompt 1 — Backend model and rule
 **Prompt**
 > Using the existing FastAPI Task Tracker structure, add an optional `due_date` to task create/update/response models. Compute an `overdue` boolean rather than storing it. A task is overdue only when due_date is before today and status is not Done. Keep changes limited to models and a small business-rule helper. Do not add authentication, databases, or unrelated refactors.
@@ -25,6 +33,14 @@ The AI added the filter in the existing list route.
 Accepted after verifying that filter combinations still worked.
 
 ## Feature 2 — Tags
+
+### Weak prompt rewrite example
+
+**Weak prompt**
+> Add tags to tasks.
+
+**Stronger prompt**
+> Add `tags: list[str]` to TaskCreate and optional tags to TaskUpdate. Trim each tag, reject blank tags, cap each tag at 30 characters, and de-duplicate case-insensitively while preserving first occurrence. Do not introduce a new tag database or model.
 
 ### Prompt 3 — Tag validation
 **Prompt**
@@ -48,6 +64,14 @@ Accepted after tests.
 
 ## Frontend
 
+### Weak prompt rewrite example
+
+**Weak prompt**
+> Update the UI for the new fields.
+
+**Stronger prompt**
+> Update only the existing Task Tracker frontend needed for the two features: add due date and comma-separated tags to the create form, show due date/overdue and tag chips on cards, and add overdue/tag filters. Keep the three Kanban columns and existing backend rules. If a PATCH request is rejected, show the server error and reload the board so the UI returns to server truth.
+
 ### Prompt 5 — Focused UI integration
 **Prompt**
 > Update only the existing Task Tracker frontend needed for the two features: add due date and comma-separated tags to the create form, show due date/overdue and tag chips on cards, and add overdue/tag filters. Keep the three Kanban columns and existing backend rules. If a PATCH request is rejected, show the server error and reload the board so the UI returns to server truth.
@@ -59,6 +83,14 @@ The AI added form inputs, card rendering, filters, and error handling.
 Accepted with minor simplification. No framework, authentication, or unrelated visual redesign was added.
 
 ## Tests
+
+### Weak prompt rewrite example
+
+**Weak prompt**
+> Add more tests.
+
+**Stronger prompt**
+> Write focused pytest tests for baseline task CRUD coverage plus the existing feature coverage. Include create, get, list, update, and delete checks, then keep the due-date, overdue, tag, and invalid status-transition coverage in place. Generate tests only; do not rewrite production code.
 
 ### Prompt 6 — Targeted tests
 **Prompt**

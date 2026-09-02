@@ -13,6 +13,57 @@ def create_task(client, **overrides):
     return client.post("/tasks", json=body)
 
 
+def test_create_get_and_list_tasks(client):
+    res = create_task(client, title="CRUD task")
+    assert res.status_code == 201
+    created = res.json()
+
+    get_res = client.get(f"/tasks/{created['id']}")
+    assert get_res.status_code == 200
+    assert get_res.json()["title"] == "CRUD task"
+
+    list_res = client.get("/tasks")
+    assert list_res.status_code == 200
+    assert [task["id"] for task in list_res.json()] == [created["id"]]
+
+
+def test_update_task_updates_selected_fields(client):
+    created = create_task(client, title="Original", description="Keep", tags=["backend"]).json()
+    res = client.patch(f"/tasks/{created['id']}", json={"title": "Updated", "priority": "High"})
+    assert res.status_code == 200
+
+    body = res.json()
+    assert body["title"] == "Updated"
+    assert body["description"] == "Keep"
+    assert body["priority"] == "High"
+    assert body["tags"] == ["backend"]
+
+
+def test_delete_task_removes_task(client):
+    created = create_task(client, title="Delete me").json()
+    res = client.delete(f"/tasks/{created['id']}")
+    assert res.status_code == 204
+
+    assert client.get(f"/tasks/{created['id']}").status_code == 404
+    assert client.get("/tasks").json() == []
+
+
+def test_null_title_update_is_rejected_without_corrupting_tasks(client):
+    created = create_task(client, title="Stable task").json()
+    res = client.patch(f"/tasks/{created['id']}", json={"title": None})
+    assert res.status_code == 422
+
+    list_res = client.get("/tasks")
+    assert list_res.status_code == 200
+    tasks = list_res.json()
+    assert len(tasks) == 1
+    assert tasks[0]["title"] == "Stable task"
+
+    get_res = client.get(f"/tasks/{created['id']}")
+    assert get_res.status_code == 200
+    assert get_res.json()["title"] == "Stable task"
+
+
 def test_valid_due_date_is_saved(client):
     due = (date.today() + timedelta(days=2)).isoformat()
     res = create_task(client, due_date=due)
