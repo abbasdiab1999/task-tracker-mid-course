@@ -28,6 +28,12 @@ def serialize(task: dict) -> TaskResponse:
     return TaskResponse(**task, overdue=is_overdue(task))
 
 
+def reject_null_updates(changes: dict) -> None:
+    for field in ("title", "description", "status", "priority", "tags"):
+        if field in changes and changes[field] is None:
+            raise HTTPException(status_code=422, detail=f"{field} cannot be null")
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -73,6 +79,7 @@ def patch_task(task_id: int, payload: TaskUpdate):
         raise HTTPException(status_code=404, detail="Task not found")
 
     changes = payload.model_dump(exclude_unset=True)
+    reject_null_updates(changes)
     if "status" in changes:
         try:
             validate_status_transition(current["status"], changes["status"])
