@@ -33,11 +33,39 @@
 ## Docker evidence
 
 - **Build command**: `docker build -t task-tracker .`
+- **Build result**: Build succeeded (13/13 steps completed, image tagged `task-tracker:latest`).
+  ```
+  [+] Building 0.7s (13/13) FINISHED
+   => [internal] load build definition from Dockerfile
+   => [internal] load metadata for docker.io/library/python:3.11-slim
+   => [internal] load .dockerignore
+   => [1/7] FROM docker.io/library/python:3.11-slim
+   => [internal] load build context
+   => CACHED [2/7] RUN useradd --create-home appuser
+   => CACHED [3/7] WORKDIR /home/appuser/app
+   => CACHED [4/7] COPY requirements.txt .
+   => CACHED [5/7] RUN pip install --no-cache-dir -r requirements.txt
+   => CACHED [6/7] COPY app/ ./app/
+   => CACHED [7/7] COPY frontend/ ./frontend/
+   => exporting to image
+   => => naming to docker.io/library/task-tracker:latest
+  ```
 - **Run command**: `docker run -p 8000:8000 task-tracker`
-- **/health check**: `curl http://localhost:8000/health` → expected `{"status":"ok"}` (HTTP 200)
+- **Run result**: Container started cleanly and served requests.
+  ```
+  INFO:     Started server process [1]
+  INFO:     Waiting for application startup.
+  INFO:     Application startup complete.
+  INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+  INFO:     172.17.0.1:42914 - "GET / HTTP/1.1" 200 OK
+  INFO:     172.17.0.1:42928 - "GET /static/styles.css HTTP/1.1" 200 OK
+  INFO:     172.17.0.1:42934 - "GET /static/app.js HTTP/1.1" 200 OK
+  INFO:     172.17.0.1:42940 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+  INFO:     172.17.0.1:42942 - "GET /tasks HTTP/1.1" 200 OK
+  ```
+- **`/health` check**: `curl http://localhost:8000/health` → `{"status":"ok"}` — HTTP 200 confirmed against the containerized app.
 - **Non-root check**: Dockerfile creates and uses `appuser`; the `USER appuser` directive is present before the `CMD`.
 - **No-baked-secrets check**: `.dockerignore` excludes `.env`, `*.env`, `tests/`, and `docs/`. `requirements.txt` contains only package names and versions, no credentials. `app/storage.py` uses in-memory dict with no connection strings.
-- **Note**: Docker is not installed in the local development environment. The Dockerfile was reviewed and validated manually. The CI job does not currently build the Docker image; Docker build evidence will be produced after installing Docker or running in a Docker-available environment.
 
 ## Documentation claim-vs-reality log
 
