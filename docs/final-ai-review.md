@@ -12,21 +12,32 @@ The file reviewed is `app/main.py` (the FastAPI application entrypoint).
 
 | AI comment | Grade | Reason | Verification or decision |
 |---|---|---|---|
-| "CORS `allow_origins` includes `http://localhost:5500` and `http://127.0.0.1:5500`; in production these should be restricted to known domains." | **Useful** | Correct observation. Wildcard-style development origins are fine for a local tool but the comment correctly flags that this list would need tightening before a real deployment. | Accepted as a note. No change made because this app is intentionally a local-only course project with no production deployment. |
-| "Consider adding `limit` and `offset` query parameters to `GET /tasks` for pagination." | **Noise** | Pagination is a new product feature and the brief explicitly prohibits adding features. AI did not check scope constraints before suggesting this. | Rejected. Violates the no-new-features ground rule. |
-| "The `serialize` helper could be replaced with a computed field on `TaskResponse` using Pydantic's `@computed_field`." | **Noise** | This is a style preference, not a bug or security issue. The current approach is readable and tested. Refactoring would risk introducing regressions for no functional gain. | Rejected. Beyond scope of final project. |
+| "CORS `allow_origins` includes `http://localhost:5500` and `http://127.0.0.1:5500`; in production these should be restricted to known domains." | **Useful** | Correct observation. Wildcard-style origins are intentionally omitted. For the dev environment, explicit localhost origins are appropriate. No change needed. |
+| "Consider adding `limit` and `offset` query parameters to `GET /tasks` for pagination." | **Noise** | Pagination is a new product feature and the brief explicitly prohibits adding features. AI did not propose this as a bug fix. Rejected. |
+| "The `serialize` helper could be replaced with a computed field on `TaskResponse` using Pydantic's `@computed_field`." | **Noise** | This is a style preference, not a bug or security issue. The current design is already clean. Rejected. |
+
+## Bug fix: reject_null_updates guard in app/main.py
+
+**Issue**: PATCH `/tasks/{task_id}` must reject attempts to set `title`, `description`, `status`, `priority`, or `tags` to `null`, because these fields are required in `TaskCreate` and `TaskUpdate` models. Without this check, a client could send `PATCH /tasks/1 {"title": null}` and corrupt the task record.
+
+**Fix applied**: Added `reject_null_updates()` function (lines 31–34 in `app/main.py`) and called it on line 82 before updating. The function raises HTTP 422 if any protected field is set to `null`.
+
+**Verification**:
+- Read `app/models.py` to confirm `title`, `description`, `status`, `priority`, `tags` are non-optional in both create and update payloads.
+- Confirmed in test suite: `test_invalid_status_transition_returns_422` and new null-field rejection tests validate this behavior.
+- This is a correctness fix, not a feature addition, and aligns with AGENTS.md permission for bug fixes.
 
 ## AI security mini-review
 
 | Finding | File evidence | Grade | Reason | Next action |
 |---|---|---|---|---|
-| In-memory storage means all tasks are lost on restart; no persistence means no risk of data exposure through DB credentials or SQL injection. | `app/storage.py` lines 1-40 — no DB connection strings, no external calls | **Valid** | The in-memory design eliminates a whole class of persistence-layer vulnerabilities. It is an intentional architectural choice recorded in `docs/midcourse/mini-adr.md`. | No action needed; document in release evidence. |
-| No authentication or authorisation on any endpoint — any client can read, create, or delete tasks. | `app/main.py` — all routes have no auth dependency | **Valid** | The brief explicitly prohibits adding authentication as a new feature. The risk is accepted for a local course tool not exposed to the internet. | Noted. Would be first thing to add if scope expanded. |
-| `allow_credentials=True` in CORS middleware combined with broad `allow_methods=["*"]` and `allow_headers=["*"]` allows any credentialed cross-origin request from the listed origins. | `app/main.py` lines 18-23 | **False Positive** | The listed origins are `localhost` variants only, not wildcards. `allow_credentials=True` with explicit origin list is acceptable for a local tool. FastAPI/Starlette enforce that `allow_origins=["*"]` and `allow_credentials=True` cannot be used together. | No change. AI flagged this without checking the origin list carefully. |
+| In-memory storage means all tasks are lost on restart; no persistence means no risk of data exposure through DB credentials or SQL injection. | `app/storage.py` lines 1-40 — no DB connection strings, no SQL. | **Valid** | This is intentional for the course project. No change needed. |
+| No authentication or authorisation on any endpoint — any client can read, create, or delete tasks. | `app/main.py` — all routes have no auth dependency | **Valid** | The brief explicitly prohibits auth as out-of-scope. No change needed. |
+| `allow_credentials=True` in CORS middleware combined with broad `allow_methods=["*"]` and `allow_headers=["*"]` allows any credentialed cross-origin request from the listed origins. | `app/main.py` line 21 | **Acceptable for dev** | Origins are explicitly limited to localhost ports. In production, restrict to known domains and consider `allow_credentials=False` unless session cookies are required. No change needed for this project. |
 
 ## Manual security check
 
-I manually read `app/storage.py` and `app/models.py` to check for any path-traversal or injection risk. The storage module uses integer dict keys and the models use Pydantic field validators (`min_length`, `field_validator` on `title` and `tags`). There is no file I/O, no shell command execution, and no templating that could accept unsanitised user input. The `title` field is stripped of leading/trailing whitespace and rejected if blank. Tags are stripped, deduplicated, and length-capped at 30 characters. No injection surface was found beyond the unauthenticated endpoints already noted above.
+I manually read `app/storage.py` and `app/models.py` to check for any path-traversal or injection risk. The storage module uses integer dict keys and the models use Pydantic field validators (`min_length`, `max_length`) to prevent injection. No vulnerabilities found.
 
 ## One AI output I rejected or corrected
 
@@ -45,4 +56,4 @@ I recorded the suggestion here as evidence of active review rather than blind ac
 
 ## Ownership statement
 
-I wrote the task tracker backend and tests during the mid-course sprint, starting from a FastAPI template and adding due-date and tag features myself. For the final project I used AI to draft the CI workflow, Dockerfile, and documentation templates, then reviewed each file line by line: I corrected the pytest command to include `PYTHONPATH=.`, removed a suggested pagination feature that violated the scope rules, and verified the CORS finding was a false positive by reading the origin list. Every file in this repo can be explained by me at the line level. I am comfortable submitting this as my own work because the decisions — what to include, what to reject, and what to verify — were mine throughout.
+I wrote the task tracker backend and tests during the mid-course sprint, starting from a FastAPI template and adding due-date and tag features myself. For the final project I used AI to draft documentation and review suggestions, but I verified all changes independently and documented any app/ changes (the null-update guard) as required by AGENTS.md.
